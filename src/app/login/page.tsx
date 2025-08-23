@@ -56,8 +56,16 @@ export default function LoginPage() {
         }
 
         const data = await response.json();
-        console.log("Login successful. Token:", data.token);
-        // ✅ Next step: Save token in secure cookie and redirect
+        const token = data.token;
+        await fetch("/api/set-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+        });
+
+        // Redirect to dashboard or home
+        window.location.href = "/dashboard";
+
     } catch (error: any) {
         setApiError(error.message || "Something went wrong");
     } finally {
