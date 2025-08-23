@@ -1,31 +1,38 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { login as loginAction, logout as logoutAction } from "../store/authSlice";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch("/api/user");
+        const res = await fetch("/api/user", { cache: "no-store" });
         if (!res.ok) {
+          dispatch(logoutAction());
           window.location.href = "/login";
           return;
         }
         const data = await res.json();
         setUser(data);
+        dispatch(loginAction(data));
       } catch {
+        dispatch(logoutAction());
         window.location.href = "/login";
       } finally {
         setLoading(false);
       }
     }
     fetchUser();
-  }, []);
+  }, [dispatch]);
 
   const handleLogout = async () => {
     await fetch("/api/logout", { method: "POST" });
+    dispatch(logoutAction());
     window.location.href = "/login";
   };
 

@@ -1,12 +1,8 @@
-"use client"; 
-import { Provider } from "react-redux";
-import { store } from "./store";
-import { Outlet, Link } from "react-router-dom";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function App() {
-  return (
-    <Provider store={store}>
-      <Outlet />
-    </Provider>
-  );
+export default async function IndexPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("authToken")?.value;
+  redirect(token ? "/dashboard" : "/login");
 }
