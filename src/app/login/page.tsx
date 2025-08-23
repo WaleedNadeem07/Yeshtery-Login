@@ -6,6 +6,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
 
   const isEmailValid = (value: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -34,13 +37,33 @@ export default function LoginPage() {
     if (errors.password) setErrors({ ...errors, password: undefined });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) {
-      console.log("Form is valid. Proceed to API call...");
-      // Next step: API integration
+    setApiError(null); // Clear previous errors
+
+    if (!validate()) return;
+
+    setLoading(true);
+    try {
+        const response = await fetch("https://api-yeshtery.dev.meetusvr.com/v1/yeshtery/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, isEmployee: true }),
+        });
+
+        if (!response.ok) {
+        throw new Error("Invalid email or password");
+        }
+
+        const data = await response.json();
+        console.log("Login successful. Token:", data.token);
+        // ✅ Next step: Save token in secure cookie and redirect
+    } catch (error: any) {
+        setApiError(error.message || "Something went wrong");
+    } finally {
+        setLoading(false);
     }
-  };
+    };
 
   // Button disabled only if fields are empty or email invalid
   const isButtonDisabled = !email || !password || !isEmailValid(email);
@@ -133,12 +156,14 @@ export default function LoginPage() {
 
               {/* Login Button */}
               <button
-                type="submit"
-                disabled={isButtonDisabled}
-                className="w-full py-3.5 bg-[#9414FF] text-white rounded-md text-lg font-medium hover:bg-purple-700 transition disabled:opacity-50"
-              >
-                Login
+                    type="submit"
+                    disabled={isButtonDisabled || loading}
+                    className="w-full py-3.5 bg-[#9414FF] text-white rounded-md text-lg font-medium hover:bg-purple-700 transition disabled:opacity-50"
+                  >
+                    {loading ? "Logging in..." : "Login"}
               </button>
+                          
+              {apiError && <p className="text-red-500 text-sm mt-3">{apiError}</p>}
 
               {/* Sign Up */}
               <p className="mt-4 text-sm md:text-base text-[#62626B] text-center w-full">
